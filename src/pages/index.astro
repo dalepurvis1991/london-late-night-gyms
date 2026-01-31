@@ -1,0 +1,117 @@
+---
+import { PLACES, listAreas } from "../data/places";
+
+const url = new URL(Astro.request.url);
+const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+const lateOnly = url.searchParams.get("late") === "1";
+
+const places = PLACES.filter((p) => {
+  if (lateOnly && !p.lateNightFriendly) return false;
+  if (!q) return true;
+  const hay = [p.name, p.area, p.nearestTube ?? "", p.hoursNote, p.blurb]
+    .join(" ")
+    .toLowerCase();
+  return hay.includes(q);
+});
+
+const areas = listAreas();
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Late-Night Gyms in London — Directory</title>
+    <meta
+      name="description"
+      content="A directory of late-night gyms in London (always verify opening times)."
+    />
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        margin: 0;
+        color: #111;
+      }
+      a {
+        color: inherit;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .card {
+        border: 1px solid #eee;
+        padding: 14px;
+        margin-bottom: 10px;
+      }
+      .pill {
+        border: 1px solid #ddd;
+        padding: 6px 10px;
+        border-radius: 999px;
+        display: inline-block;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <header>
+        <h1 style="font-size: 32px; margin: 0 0 8px;">Late-Night Gyms in London</h1>
+        <p style="color:#444; margin:0 0 16px;">
+          Directory MVP. Always verify opening times (holidays/weekends differ).
+        </p>
+      </header>
+
+      <section style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+        <form style="display:flex; gap:12px; flex-wrap:wrap;">
+          <input
+            name="q"
+            value={q}
+            placeholder="Search (area, tube, name…)"
+            style="padding:10px; min-width:280px;"
+          />
+          <label style="display:flex; gap:8px; align-items:center;">
+            <input type="checkbox" name="late" value="1" checked={lateOnly} />
+            Late-night friendly only
+          </label>
+          <button type="submit" style="padding:10px 14px; cursor:pointer;">Search</button>
+        </form>
+
+        <a href="/london/late-night-gyms" style="margin-left:auto; text-decoration:underline;">Browse all →</a>
+      </section>
+
+      <section style="margin-bottom:24px;">
+        <h2 style="font-size:20px; margin:0 0 8px;">Popular areas</h2>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          {areas.map((a) => (
+            <a class="pill" href={`/london/late-night-gyms?area=${encodeURIComponent(a)}`}>{a}</a>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 style="font-size:20px; margin:0 0 8px;">Listings ({places.length})</h2>
+        <ul style="list-style:none; padding:0; margin:0;">
+          {places.map((p) => (
+            <li class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px;">
+                <a href={`/london/late-night-gyms/${p.slug}`}><strong>{p.name}</strong></a>
+                <span style="color:#555;">{p.area}</span>
+              </div>
+              <div style="color:#555; margin-top:6px;">
+                {p.nearestTube ? `Near ${p.nearestTube} • ` : ""}{p.hoursNote}
+              </div>
+              <p style="margin:8px 0 0; color:#333;">{p.blurb}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <footer style="margin-top:24px; color:#666; font-size:14px;">
+        <p style="margin:0;">Gym owner? Want updates? Email: <em>hello@yourdomain.com</em></p>
+      </footer>
+    </main>
+  </body>
+</html>
